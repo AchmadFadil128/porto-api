@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: portfolio_postgres
+    environment:
+      POSTGRES_USER: me
+      PGUSER: me
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: portfolio
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - portfolio_network
+
+  app:
+    build: .
+    container_name: portfolio_app
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/portfolio_db
+      ADMIN_USER: admin
+      ADMIN_PASS: admin
+    depends_on:
+      - postgres
+    networks:
+      - portfolio_network
+
+volumes:
+  postgres_data:
+
+networks:
+  portfolio_network:
+    driver: bridge
