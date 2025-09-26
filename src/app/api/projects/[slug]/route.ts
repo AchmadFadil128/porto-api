@@ -11,9 +11,21 @@ export async function GET(
   const { slug } = await params;
   
   try {
-    // Fetch a single project by slug, returning all fields
+    // Fetch a single project by slug, returning all fields including screenshots
     const project = await db
-      .select()
+      .select({
+        id: projects.id,
+        slug: projects.slug,
+        title: projects.title,
+        short_description: projects.short_description,
+        image_url: projects.image_url,
+        description: projects.description,
+        live_demo_url: projects.live_demo_url,
+        github_repo_url: projects.github_repo_url,
+        screenshots: projects.screenshots,
+        created_at: projects.created_at,
+        updated_at: projects.updated_at,
+      })
       .from(projects)
       .where(eq(projects.slug, slug))
       .limit(1);

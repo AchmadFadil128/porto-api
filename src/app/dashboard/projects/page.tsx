@@ -102,6 +102,12 @@ export default function DashboardProjects() {
                       scope="col"
                       className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
                     >
+                      Screenshots
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                    >
                       Created
                     </th>
                     <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
@@ -117,6 +123,34 @@ export default function DashboardProjects() {
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         {project.slug}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {project.screenshots && project.screenshots.length > 0 && (
+                          <div className="flex -space-x-2">
+                            {project.screenshots.slice(0, 3).map((screenshot, idx) => (
+                              <div key={idx} className="inline-block h-8 w-8 rounded-full overflow-hidden bg-gray-200 border border-white">
+                                <img
+                                  src={screenshot}
+                                  alt={`Screenshot ${idx + 1}`}
+                                  className="h-full w-full object-cover"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    // Create a simple fallback SVG as a data URL
+                                    target.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+                                  }}
+                                />
+                              </div>
+                            ))}
+                            {project.screenshots.length > 3 && (
+                              <div className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-300 text-xs font-medium text-gray-700 border border-white">
+                                +{project.screenshots.length - 3}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {(!project.screenshots || project.screenshots.length === 0) && (
+                          <span className="text-gray-500">No screenshots</span>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         {project.created_at ? new Date(project.created_at).toLocaleDateString() : 'N/A'}

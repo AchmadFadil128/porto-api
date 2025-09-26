@@ -6,7 +6,7 @@ import { isUserAuthenticated } from '@/lib/auth';
 
 export async function GET() {
   try {
-    // Fetch all projects, only returning public fields
+    // Fetch all projects, including screenshots
     const projectsData = await db
       .select({
         id: projects.id,
@@ -14,9 +14,12 @@ export async function GET() {
         title: projects.title,
         short_description: projects.short_description,
         image_url: projects.image_url,
+        description: projects.description,
         live_demo_url: projects.live_demo_url,
         github_repo_url: projects.github_repo_url,
+        screenshots: projects.screenshots,
         created_at: projects.created_at,
+        updated_at: projects.updated_at,
       })
       .from(projects)
       .orderBy(desc(projects.created_at));
@@ -52,7 +55,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Slug already exists' }, { status: 409 });
     }
 
-    // Insert the new project
+    // Insert the new project with screenshots
     const [newProject] = await db
       .insert(projects)
       .values({
@@ -63,7 +66,7 @@ export async function POST(request: NextRequest) {
         description: body.description || null,
         live_demo_url: body.live_demo_url || null,
         github_repo_url: body.github_repo_url || null,
-        screenshots: body.screenshots || null,
+        screenshots: body.screenshots || [],
       })
       .returning();
 

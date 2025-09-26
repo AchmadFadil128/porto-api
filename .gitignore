@@ -12,6 +12,8 @@
 /dist/
 /build
 
+public/uploads/*
+
 # Production
 /.vercel/
 /.vercel_build_output

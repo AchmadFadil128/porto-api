@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import ScreenshotUpload from '@/components/ScreenshotUpload';
 
 // Define the form schema using Zod
 const projectSchema = z.object({
@@ -23,6 +24,7 @@ type FormData = z.infer<typeof projectSchema>;
 export default function NewProjectPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [screenshots, setScreenshots] = useState<string[]>([]);
 
   const {
     register,
@@ -40,7 +42,10 @@ export default function NewProjectPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          screenshots, // Add the uploaded screenshots to the form data
+        }),
       });
 
       if (res.ok) {
@@ -167,6 +172,15 @@ export default function NewProjectPage() {
           {errors.github_repo_url && (
             <p className="mt-1 text-sm text-red-600">{errors.github_repo_url.message}</p>
           )}
+        </div>
+
+        {/* Screenshot Upload */}
+        <div>
+          <ScreenshotUpload 
+            screenshots={screenshots} 
+            onScreenshotsChange={setScreenshots} 
+            label="Project Screenshots"
+          />
         </div>
 
         <div className="flex justify-end space-x-3">

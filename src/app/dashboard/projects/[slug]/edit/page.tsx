@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import ScreenshotUpload from '@/components/ScreenshotUpload';
 
 // Define the form schema using Zod
 const projectSchema = z.object({
@@ -24,6 +25,7 @@ export default function EditProjectPage({ params }: { params: { slug: string } }
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [screenshots, setScreenshots] = useState<string[]>([]);
 
   const {
     register,
@@ -49,8 +51,8 @@ export default function EditProjectPage({ params }: { params: { slug: string } }
             description: projectData.description || '',
             live_demo_url: projectData.live_demo_url || '',
             github_repo_url: projectData.github_repo_url || '',
-            screenshots: projectData.screenshots || [],
           });
+          setScreenshots(projectData.screenshots || []); // Set the screenshots separately
         } else {
           setError(projectData.error || 'Failed to fetch project data');
         }
@@ -75,7 +77,10 @@ export default function EditProjectPage({ params }: { params: { slug: string } }
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          screenshots, // Use the updated screenshots array
+        }),
       });
 
       if (res.ok) {
@@ -206,6 +211,15 @@ export default function EditProjectPage({ params }: { params: { slug: string } }
           {errors.github_repo_url && (
             <p className="mt-1 text-sm text-red-600">{errors.github_repo_url.message}</p>
           )}
+        </div>
+
+        {/* Screenshot Upload */}
+        <div>
+          <ScreenshotUpload 
+            screenshots={screenshots} 
+            onScreenshotsChange={setScreenshots} 
+            label="Project Screenshots"
+          />
         </div>
 
         <div className="flex justify-end space-x-3">
