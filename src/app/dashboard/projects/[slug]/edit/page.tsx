@@ -6,7 +6,6 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import ScreenshotUpload from '@/components/ScreenshotUpload';
-import ImageUpload from '@/components/ImageUpload';
 
 // Define the form schema using Zod
 const projectSchema = z.object({
@@ -26,7 +25,6 @@ export default function EditProjectPage({ params }: { params: { slug: string } }
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [image_url, setImageUrl] = useState<string | null>(null);
   const [screenshots, setScreenshots] = useState<string[]>([]);
 
   const {
@@ -34,7 +32,6 @@ export default function EditProjectPage({ params }: { params: { slug: string } }
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
-    setValue,
   } = useForm<FormData>({
     resolver: zodResolver(projectSchema),
   });
@@ -55,7 +52,6 @@ export default function EditProjectPage({ params }: { params: { slug: string } }
             live_demo_url: projectData.live_demo_url || '',
             github_repo_url: projectData.github_repo_url || '',
           });
-          setImageUrl(projectData.image_url); // Set the main project image
           setScreenshots(projectData.screenshots || []); // Set the screenshots separately
         } else {
           setError(projectData.error || 'Failed to fetch project data');
@@ -73,24 +69,7 @@ export default function EditProjectPage({ params }: { params: { slug: string } }
     }
   }, [params.slug, reset]);
 
-  // Update image_url when the upload changes
-  const handleImageUrlChange = (url: string | null) => {
-    setImageUrl(url);
-    if (url) {
-      setValue('image_url', url); // Update form value so validation passes
-    } else {
-      setValue('image_url', ''); // Clear the field value
-    }
-  };
-
   const onSubmit = async (data: FormData) => {
-    // Ensure image_url is set properly from the uploaded value
-    const submitData = {
-      ...data,
-      image_url: image_url || data.image_url, // Use uploaded image if available, otherwise use text input
-      screenshots, // Use the updated screenshots array
-    };
-    
     setError(null);
     try {
       const res = await fetch(`/api/projects/${params.slug}`, {
@@ -98,7 +77,10 @@ export default function EditProjectPage({ params }: { params: { slug: string } }
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(submitData),
+        body: JSON.stringify({
+          ...data,
+          screenshots, // Use the updated screenshots array
+        }),
       });
 
       if (res.ok) {
@@ -174,19 +156,17 @@ export default function EditProjectPage({ params }: { params: { slug: string } }
           )}
         </div>
 
-        {/* Main Project Image Upload */}
         <div>
-          <ImageUpload 
-            imageUrl={image_url} 
-            onImageUrlChange={handleImageUrlChange} 
-            label="Main Project Image"
-          />
-          {/* Keep the image_url field in the form but hide it since we're using the component */}
+          <label htmlFor="image_url" className="block text-sm font-medium text-gray-700">
+            Image URL *
+          </label>
           <input
-            type="hidden"
+            id="image_url"
+            type="text"
+            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${errors.image_url ? 'border-red-500' : ''}`}
             {...register('image_url')}
           />
-          {errors.image_url && image_url === null && (
+          {errors.image_url && (
             <p className="mt-1 text-sm text-red-600">{errors.image_url.message}</p>
           )}
         </div>
