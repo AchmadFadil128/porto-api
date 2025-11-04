@@ -1,36 +1,23 @@
-FROM node:20-alpine AS builder
+# Use the official Node.js runtime as the base image
+FROM node:18-alpine
 
-# Set working directory
+# Set the working directory
 WORKDIR /app
 
-# Copy package files and install deps
+# Copy package.json and package-lock.json
 COPY package*.json ./
-RUN npm ci
 
-# Copy entire project (termasuk env dan config)
+# Install dependencies
+RUN npm install
+
+# Copy the rest of the application code
 COPY . .
 
-# Build for production
+# Build the application
 RUN npm run build
 
-# --- Runtime stage ---
-FROM node:20-alpine AS runner
-
-ENV NODE_ENV=production
-ENV PORT=3001
-
-WORKDIR /app
-
-# Copy only necessary files from builder
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
-COPY --from=builder /app/src/db/schema.ts ./src/db/schema.ts
-COPY --from=builder /app/src/db/migrations ./src/db/migrations
-
+# Expose port 3001
 EXPOSE 3001
 
-# Jalankan db push dulu baru start app
-CMD ["sh", "-c", "npm run db:push && npm start"]
+# Start the application
+CMD ["npm", "start"]

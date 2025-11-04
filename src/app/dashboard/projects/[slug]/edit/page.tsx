@@ -22,7 +22,7 @@ const projectSchema = z.object({
 
 type FormData = z.infer<typeof projectSchema>;
 
-export default function EditProjectPage({ params }: { params: Promise<{ slug: string }> }) {
+export default function EditProjectPage({ params }: { params: { slug: string } }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,10 +40,9 @@ export default function EditProjectPage({ params }: { params: Promise<{ slug: st
   });
 
   useEffect(() => {
-    const fetchProjectAndParams = async () => {
+    const fetchProject = async () => {
       try {
-        const resolvedParams = await params;
-        const res = await fetch(`/api/projects/${resolvedParams.slug}`);
+        const res = await fetch(`/api/projects/${params.slug}`);
         const projectData = await res.json();
         
         if (res.ok && !projectData.error) {
@@ -69,8 +68,10 @@ export default function EditProjectPage({ params }: { params: Promise<{ slug: st
       }
     };
 
-    fetchProjectAndParams();
-  }, [params, reset]);
+    if (params.slug) {
+      fetchProject();
+    }
+  }, [params.slug, reset]);
 
   // Update image_url when the upload changes
   const handleImageUrlChange = (url: string | null) => {
@@ -92,8 +93,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ slug: st
     
     setError(null);
     try {
-      const resolvedParams = await params;
-      const res = await fetch(`/api/projects/${resolvedParams.slug}`, {
+      const res = await fetch(`/api/projects/${params.slug}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

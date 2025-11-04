@@ -14,8 +14,7 @@ export async function authenticateUser(username: string, password: string): Prom
 }
 
 export async function isUserAuthenticated(): Promise<boolean> {
-  const cookiesStore = await cookies();
-  const sessionCookie = cookiesStore.get('session');
+  const sessionCookie = await cookies().get('session');
   if (!sessionCookie) return false;
   
   try {
@@ -34,8 +33,7 @@ export async function createSession(): Promise<void> {
   };
   
   const sessionCookie = btoa(JSON.stringify(sessionData));
-  const cookiesStore = await cookies();
-  await cookiesStore.set('session', sessionCookie, {
+  await cookies().set('session', sessionCookie, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     maxAge: 60 * 60 * 24, // 24 hours
@@ -45,6 +43,5 @@ export async function createSession(): Promise<void> {
 }
 
 export async function destroySession(): Promise<void> {
-  const cookiesStore = await cookies();
-  await cookiesStore.delete('session');
+  await cookies().delete('session');
 }
