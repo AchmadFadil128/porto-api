@@ -18,7 +18,7 @@ async function testDatabaseConnection() {
     const result = await db.execute('SELECT 1 as test');
     
     console.log('✅ Database connection successful!');
-    console.log('✅ Connection test result:', result.rows[0]);
+    console.log('✅ Connection test result:', result[0]);
     
     // Check if projects table exists
     try {
@@ -30,15 +30,15 @@ async function testDatabaseConnection() {
         ) AS table_exists;
       `);
       
-      console.log('✅ Projects table exists:', tableCheck.rows[0].table_exists);
-    } catch (tableError: any) {
-      console.log('⚠️  Could not check for projects table:', tableError?.message);
+      console.log('✅ Projects table exists:', tableCheck[0].table_exists);
+    } catch (tableError) {
+      console.log('⚠️  Could not check for projects table:', tableError.message);
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('❌ Database connection failed:', error.message);
     
     // Provide some troubleshooting info based on common errors
-    if (error.message?.includes('password authentication failed')) {
+    if (error.message.includes('password authentication failed')) {
       console.log('\n💡 Troubleshooting tips:');
       console.log('   - Check that your DATABASE_URL has the correct password');
       console.log('   - Verify the PostgreSQL user exists and has the right permissions');
