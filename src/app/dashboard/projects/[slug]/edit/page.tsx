@@ -19,7 +19,7 @@ const projectSchema = z.object({
 
 type FormData = z.infer<typeof projectSchema>;
 
-export default function EditProjectPage({ params }: { params: { slug: string } }) {
+export default function EditProjectPage({ params }: { params: Promise<{ slug: string }> }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,8 @@ export default function EditProjectPage({ params }: { params: { slug: string } }
   useEffect(() => {
     const fetchProject = async () => {
       try {
-        const res = await fetch(`/api/projects/${params.slug}`);
+        const { slug } = await params;
+        const res = await fetch(`/api/projects/${slug}`);
         const projectData = await res.json();
         
         if (res.ok && !projectData.error) {
@@ -67,10 +68,8 @@ export default function EditProjectPage({ params }: { params: { slug: string } }
       }
     };
 
-    if (params.slug) {
-      fetchProject();
-    }
-  }, [params.slug, reset]);
+    fetchProject();
+  }, [params, reset]);
 
   const handleMainImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -118,7 +117,8 @@ export default function EditProjectPage({ params }: { params: { slug: string } }
       // Append screenshots as JSON string
       formData.append('screenshots', JSON.stringify(screenshots));
 
-      const res = await fetch(`/api/projects/${params.slug}`, {
+      const { slug } = await params;
+      const res = await fetch(`/api/projects/${slug}`, {
         method: 'PUT',
         body: formData,
       });

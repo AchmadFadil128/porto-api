@@ -36,10 +36,11 @@ export default function NewProjectPage() {
   });
 
   const handleMainImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setError(null); // Clear any previous errors
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (!file.type.startsWith('image/')) {
-        setFormError('image_file', { message: 'Please upload an image file' });
+        setError('Please upload an image file');
         return;
       }
       
@@ -173,9 +174,6 @@ export default function NewProjectPage() {
             accept="image/*"
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           />
-          {errors.image_file && (
-            <p className="mt-1 text-sm text-red-600">{errors.image_file.message}</p>
-          )}
           {mainImagePreview && (
             <div className="mt-2">
               <p className="text-sm text-gray-600">Preview:</p>

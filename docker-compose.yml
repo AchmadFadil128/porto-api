@@ -17,16 +17,29 @@ services:
       - portfolio_network
 
   app:
-    build: .
+    image: ramdhanistars/porto-api:latest
     container_name: portfolio_app
     ports:
-      - "3001:3001"
+      - "3001:3000"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/portfolio_db
+      DATABASE_URL: postgresql://me:123@postgres:5432/portfolio
       ADMIN_USER: admin
       ADMIN_PASS: admin
     depends_on:
       - postgres
+    networks:
+      - portfolio_network
+
+  web:
+    image: ramdhanistars/porto:latest
+    container_name: portfolio_web
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      API_URL: http://app:3000
+    depends_on:
+      - app
     networks:
       - portfolio_network
 
