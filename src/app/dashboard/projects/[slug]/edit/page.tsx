@@ -1,22 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import ScreenshotUpload from '@/components/ScreenshotUpload';
 
-// Define the form schema using Zod
+// Define the form schema using Zod (we still validate the text fields)
 const projectSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   slug: z.string().min(1, 'Slug is required'),
   short_description: z.string().min(1, 'Short description is required'),
-  image_url: z.string().min(1, 'Image URL is required'),
   description: z.string().optional(),
   live_demo_url: z.string().url('Must be a valid URL').optional().or(z.literal('')),
   github_repo_url: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-  screenshots: z.string().array().optional(),
 });
 
 type FormData = z.infer<typeof projectSchema>;
@@ -26,12 +24,17 @@ export default function EditProjectPage({ params }: { params: { slug: string } }
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [screenshots, setScreenshots] = useState<string[]>([]);
+  const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [projectData, setProjectData] = useState<any>(null);
+  const mainImageInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
     reset,
+    setValue,
   } = useForm<FormData>({
     resolver: zodResolver(projectSchema),
   });
@@ -43,11 +46,11 @@ export default function EditProjectPage({ params }: { params: { slug: string } }
         const projectData = await res.json();
         
         if (res.ok && !projectData.error) {
+          setProjectData(projectData);
           reset({
             title: projectData.title,
             slug: projectData.slug,
             short_description: projectData.short_description,
-            image_url: projectData.image_url,
             description: projectData.description || '',
             live_demo_url: projectData.live_demo_url || '',
             github_repo_url: projectData.github_repo_url || '',
@@ -69,18 +72,55 @@ export default function EditProjectPage({ params }: { params: { slug: string } }
     }
   }, [params.slug, reset]);
 
+  const handleMainImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (!file.type.startsWith('image/')) {
+        setError('Please upload an image file');
+        return;
+      }
+      
+      // Set preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setMainImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const onSubmit = async (data: FormData) => {
     setError(null);
+    setIsSubmitting(true);
+    
     try {
+      const formData = new FormData();
+      
+      // Append text fields
+      formData.append('title', data.title);
+      formData.append('slug', data.slug);
+      formData.append('short_description', data.short_description);
+      if (data.description !== undefined) formData.append('description', data.description);
+      if (data.live_demo_url) formData.append('live_demo_url', data.live_demo_url);
+      if (data.github_repo_url) formData.append('github_repo_url', data.github_repo_url);
+      
+      // Append main image file if selected (otherwise keep existing)
+      if (mainImageInputRef.current && mainImageInputRef.current.files && mainImageInputRef.current.files[0]) {
+        const imageFile = mainImageInputRef.current.files[0];
+        if (!imageFile.type.startsWith('image/')) {
+          setError('Please select an image file for the main image');
+          setIsSubmitting(false);
+          return;
+        }
+        formData.append('image', imageFile);
+      }
+      
+      // Append screenshots as JSON string
+      formData.append('screenshots', JSON.stringify(screenshots));
+
       const res = await fetch(`/api/projects/${params.slug}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...data,
-          screenshots, // Use the updated screenshots array
-        }),
+        body: formData,
       });
 
       if (res.ok) {
@@ -93,6 +133,8 @@ export default function EditProjectPage({ params }: { params: { slug: string } }
     } catch (err) {
       setError('An error occurred while updating the project');
       console.error(err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -157,18 +199,36 @@ export default function EditProjectPage({ params }: { params: { slug: string } }
         </div>
 
         <div>
-          <label htmlFor="image_url" className="block text-sm font-medium text-gray-700">
-            Image URL *
+          <label htmlFor="mainImage" className="block text-sm font-medium text-gray-700">
+            Main Image
           </label>
           <input
-            id="image_url"
-            type="text"
-            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${errors.image_url ? 'border-red-500' : ''}`}
-            {...register('image_url')}
+            id="mainImage"
+            type="file"
+            ref={mainImageInputRef}
+            onChange={handleMainImageChange}
+            accept="image/*"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           />
-          {errors.image_url && (
-            <p className="mt-1 text-sm text-red-600">{errors.image_url.message}</p>
-          )}
+          {mainImagePreview ? (
+            <div className="mt-2">
+              <p className="text-sm text-gray-600">New Image Preview:</p>
+              <img 
+                src={mainImagePreview} 
+                alt="New preview" 
+                className="mt-1 h-32 object-contain border rounded-md"
+              />
+            </div>
+          ) : projectData?.image_base64 ? (
+            <div className="mt-2">
+              <p className="text-sm text-gray-600">Current Image:</p>
+              <img 
+                src={projectData.image_base64} 
+                alt="Current project" 
+                className="mt-1 h-32 object-contain border rounded-md"
+              />
+            </div>
+          ) : null}
         </div>
 
         <div>

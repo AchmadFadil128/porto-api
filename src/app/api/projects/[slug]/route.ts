@@ -18,7 +18,7 @@ export async function GET(
         slug: projects.slug,
         title: projects.title,
         short_description: projects.short_description,
-        image_url: projects.image_url,
+        image_base64: projects.image_base64,
         description: projects.description,
         live_demo_url: projects.live_demo_url,
         github_repo_url: projects.github_repo_url,
@@ -59,32 +59,57 @@ export async function PUT(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    const body = await request.json();
+    const formData = await request.formData();
+    
+    // Extract text fields from formData
+    const title = formData.get('title') as string | null;
+    const slugValue = formData.get('slug') as string | null;
+    const short_description = formData.get('short_description') as string | null;
+    const description = formData.get('description') as string | null;
+    const live_demo_url = formData.get('live_demo_url') as string | null;
+    const github_repo_url = formData.get('github_repo_url') as string | null;
+    const screenshots = formData.get('screenshots') ? JSON.parse(formData.get('screenshots') as string) : null;
 
     // Check if the new slug already exists (if different from current)
-    if (body.slug && body.slug !== slug) {
+    if (slugValue && slugValue !== slug) {
       const duplicateCheck = await db
         .select()
         .from(projects)
-        .where(eq(projects.slug, body.slug));
+        .where(eq(projects.slug, slugValue));
       
       if (duplicateCheck.length > 0) {
         return NextResponse.json({ error: 'Slug already exists' }, { status: 409 });
       }
     }
 
+    // Process main image file to Base64 if provided
+    let image_base64 = existingProject[0].image_base64; // Default to existing value
+    const imageFile = formData.get('image') as File | null;
+    
+    if (imageFile) {
+      // Validate file type (only images)
+      if (!imageFile.type.startsWith('image/')) {
+        return NextResponse.json({ error: 'Only image files are allowed for main image' }, { status: 400 });
+      }
+      
+      const buffer = Buffer.from(await imageFile.arrayBuffer());
+      const base64String = buffer.toString('base64');
+      // Add data URL prefix
+      image_base64 = `data:${imageFile.type};base64,${base64String}`;
+    }
+
     // Update the project
     const [updatedProject] = await db
       .update(projects)
       .set({
-        title: body.title || existingProject[0].title,
-        slug: body.slug || existingProject[0].slug,
-        short_description: body.short_description || existingProject[0].short_description,
-        image_url: body.image_url || existingProject[0].image_url,
-        description: body.description !== undefined ? body.description : existingProject[0].description,
-        live_demo_url: body.live_demo_url || existingProject[0].live_demo_url,
-        github_repo_url: body.github_repo_url || existingProject[0].github_repo_url,
-        screenshots: body.screenshots !== undefined ? body.screenshots : existingProject[0].screenshots,
+        title: title || existingProject[0].title,
+        slug: slugValue || existingProject[0].slug,
+        short_description: short_description || existingProject[0].short_description,
+        image_base64,
+        description: description !== null ? description : existingProject[0].description,
+        live_demo_url: live_demo_url || existingProject[0].live_demo_url,
+        github_repo_url: github_repo_url || existingProject[0].github_repo_url,
+        screenshots: screenshots !== null ? screenshots : existingProject[0].screenshots,
       })
       .where(eq(projects.slug, slug))
       .returning();

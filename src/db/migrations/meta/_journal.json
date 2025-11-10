@@ -1,0 +1,12 @@
+{
+  "versions": "5.0",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1762745131101,
+      "tag": "0000_cynical_mongoose",
+      "breakpoints": true
+    }
+  ]
+}
