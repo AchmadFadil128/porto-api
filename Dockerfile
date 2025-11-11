@@ -20,4 +20,4 @@ RUN npm run build
 EXPOSE 3001
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["sh", "-c", "npx drizzle-kit push && npm start"]
