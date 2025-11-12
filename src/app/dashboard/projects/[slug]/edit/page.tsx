@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import ScreenshotUpload from '@/components/ScreenshotUpload';
+import ImageUpload from '@/components/ImageUpload';
 
 // Define the form schema using Zod (we still validate the text fields)
 const projectSchema = z.object({
@@ -23,6 +24,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ slug: st
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [image_url, setImageUrl] = useState<string | null>(null);
   const [screenshots, setScreenshots] = useState<string[]>([]);
   const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,6 +58,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ slug: st
             live_demo_url: projectData.live_demo_url || '',
             github_repo_url: projectData.github_repo_url || '',
           });
+          setImageUrl(projectData.image_url); // Set the main project image
           setScreenshots(projectData.screenshots || []); // Set the screenshots separately
         } else {
           setError(projectData.error || 'Failed to fetch project data');
@@ -88,7 +91,24 @@ export default function EditProjectPage({ params }: { params: Promise<{ slug: st
     }
   };
 
+  // Update image_url when the upload changes
+  const handleImageUrlChange = (url: string | null) => {
+    setImageUrl(url);
+    if (url) {
+      setValue('image_url', url); // Update form value so validation passes
+    } else {
+      setValue('image_url', ''); // Clear the field value
+    }
+  };
+
   const onSubmit = async (data: FormData) => {
+    // Ensure image_url is set properly from the uploaded value
+    const submitData = {
+      ...data,
+      image_url: image_url || data.image_url, // Use uploaded image if available, otherwise use text input
+      screenshots, // Use the updated screenshots array
+    };
+    
     setError(null);
     setIsSubmitting(true);
     
@@ -120,7 +140,10 @@ export default function EditProjectPage({ params }: { params: Promise<{ slug: st
       const { slug } = await params;
       const res = await fetch(`/api/projects/${slug}`, {
         method: 'PUT',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submitData),
       });
 
       if (res.ok) {
@@ -198,37 +221,21 @@ export default function EditProjectPage({ params }: { params: Promise<{ slug: st
           )}
         </div>
 
+        {/* Main Project Image Upload */}
         <div>
-          <label htmlFor="mainImage" className="block text-sm font-medium text-gray-700">
-            Main Image
-          </label>
-          <input
-            id="mainImage"
-            type="file"
-            ref={mainImageInputRef}
-            onChange={handleMainImageChange}
-            accept="image/*"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          <ImageUpload 
+            imageUrl={image_url} 
+            onImageUrlChange={handleImageUrlChange} 
+            label="Main Project Image"
           />
-          {mainImagePreview ? (
-            <div className="mt-2">
-              <p className="text-sm text-gray-600">New Image Preview:</p>
-              <img 
-                src={mainImagePreview} 
-                alt="New preview" 
-                className="mt-1 h-32 object-contain border rounded-md"
-              />
-            </div>
-          ) : projectData?.image_base64 ? (
-            <div className="mt-2">
-              <p className="text-sm text-gray-600">Current Image:</p>
-              <img 
-                src={projectData.image_base64} 
-                alt="Current project" 
-                className="mt-1 h-32 object-contain border rounded-md"
-              />
-            </div>
-          ) : null}
+          {/* Keep the image_url field in the form but hide it since we're using the component */}
+          <input
+            type="hidden"
+            {...register('image_url')}
+          />
+          {errors.image_url && image_url === null && (
+            <p className="mt-1 text-sm text-red-600">{errors.image_url.message}</p>
+          )}
         </div>
 
         <div>
