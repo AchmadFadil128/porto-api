@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, ChangeEvent } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -26,17 +26,14 @@ export default function EditProjectPage({ params }: { params: Promise<{ slug: st
   const [loading, setLoading] = useState(true);
   const [image_url, setImageUrl] = useState<string | null>(null);
   const [screenshots, setScreenshots] = useState<string[]>([]);
-  const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [projectData, setProjectData] = useState<any>(null);
-  const mainImageInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
-    setValue,
   } = useForm<FormData>({
     resolver: zodResolver(projectSchema),
   });
@@ -58,7 +55,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ slug: st
             live_demo_url: projectData.live_demo_url || '',
             github_repo_url: projectData.github_repo_url || '',
           });
-          setImageUrl(projectData.image_url); // Set the main project image
+          setImageUrl(projectData.image_url || projectData.image_base64); // Set the main project image (support both for migration)
           setScreenshots(projectData.screenshots || []); // Set the screenshots separately
         } else {
           setError(projectData.error || 'Failed to fetch project data');
@@ -74,38 +71,16 @@ export default function EditProjectPage({ params }: { params: Promise<{ slug: st
     fetchProject();
   }, [params, reset]);
 
-  const handleMainImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      if (!file.type.startsWith('image/')) {
-        setError('Please upload an image file');
-        return;
-      }
-      
-      // Set preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setMainImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   // Update image_url when the upload changes
   const handleImageUrlChange = (url: string | null) => {
     setImageUrl(url);
-    if (url) {
-      setValue('image_url', url); // Update form value so validation passes
-    } else {
-      setValue('image_url', ''); // Clear the field value
-    }
   };
 
   const onSubmit = async (data: FormData) => {
     // Ensure image_url is set properly from the uploaded value
     const submitData = {
       ...data,
-      image_url: image_url || data.image_url, // Use uploaded image if available, otherwise use text input
+      image_url: image_url || projectData?.image_url || projectData?.image_base64, // Use uploaded image if available, otherwise use existing
       screenshots, // Use the updated screenshots array
     };
     
@@ -113,30 +88,6 @@ export default function EditProjectPage({ params }: { params: Promise<{ slug: st
     setIsSubmitting(true);
     
     try {
-      const formData = new FormData();
-      
-      // Append text fields
-      formData.append('title', data.title);
-      formData.append('slug', data.slug);
-      formData.append('short_description', data.short_description);
-      if (data.description !== undefined) formData.append('description', data.description);
-      if (data.live_demo_url) formData.append('live_demo_url', data.live_demo_url);
-      if (data.github_repo_url) formData.append('github_repo_url', data.github_repo_url);
-      
-      // Append main image file if selected (otherwise keep existing)
-      if (mainImageInputRef.current && mainImageInputRef.current.files && mainImageInputRef.current.files[0]) {
-        const imageFile = mainImageInputRef.current.files[0];
-        if (!imageFile.type.startsWith('image/')) {
-          setError('Please select an image file for the main image');
-          setIsSubmitting(false);
-          return;
-        }
-        formData.append('image', imageFile);
-      }
-      
-      // Append screenshots as JSON string
-      formData.append('screenshots', JSON.stringify(screenshots));
-
       const { slug } = await params;
       const res = await fetch(`/api/projects/${slug}`, {
         method: 'PUT',
@@ -228,13 +179,10 @@ export default function EditProjectPage({ params }: { params: Promise<{ slug: st
             onImageUrlChange={handleImageUrlChange} 
             label="Main Project Image"
           />
-          {/* Keep the image_url field in the form but hide it since we're using the component */}
-          <input
-            type="hidden"
-            {...register('image_url')}
-          />
-          {errors.image_url && image_url === null && (
-            <p className="mt-1 text-sm text-red-600">{errors.image_url.message}</p>
+          {!image_url && !projectData?.image_url && (
+            <p className="mt-1 text-sm text-yellow-600">
+              Warning: No image selected. Please upload an image or the existing image will be kept.
+            </p>
           )}
         </div>
 

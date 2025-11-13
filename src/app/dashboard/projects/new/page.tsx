@@ -26,9 +26,6 @@ export default function NewProjectPage() {
   const [error, setError] = useState<string | null>(null);
   const [image_url, setImageUrl] = useState<string | null>(null);
   const [screenshots, setScreenshots] = useState<string[]>([]);
-  const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const mainImageInputRef = useRef<HTMLInputElement>(null);
   const {
     register,
     handleSubmit,
@@ -50,44 +47,20 @@ export default function NewProjectPage() {
 
   const onSubmit = async (data: FormData) => {
     // Ensure image_url is set properly from the uploaded value
+    if (!image_url) {
+      setError('Main image is required');
+      return;
+    }
+    
     const submitData = {
       ...data,
-      image_url: image_url || data.image_url, // Use uploaded image if available, otherwise use text input
+      image_url: image_url, // Use uploaded image URL
       screenshots, // Add the uploaded screenshots to the form data
     };
     
     setError(null);
-    setIsSubmitting(true);
     
     try {
-      const formData = new FormData();
-      
-      // Append text fields
-      formData.append('title', data.title);
-      formData.append('slug', data.slug);
-      formData.append('short_description', data.short_description);
-      if (data.description) formData.append('description', data.description);
-      if (data.live_demo_url) formData.append('live_demo_url', data.live_demo_url);
-      if (data.github_repo_url) formData.append('github_repo_url', data.github_repo_url);
-      
-      // Append main image file if selected
-      if (mainImageInputRef.current && mainImageInputRef.current.files && mainImageInputRef.current.files[0]) {
-        const imageFile = mainImageInputRef.current.files[0];
-        if (!imageFile.type.startsWith('image/')) {
-          setError('Please select an image file for the main image');
-          setIsSubmitting(false);
-          return;
-        }
-        formData.append('image', imageFile);
-      } else {
-        setError('Main image is required');
-        setIsSubmitting(false);
-        return;
-      }
-      
-      // Append screenshots as JSON string
-      formData.append('screenshots', JSON.stringify(screenshots));
-
       const res = await fetch('/api/projects', {
         method: 'POST',
         headers: {
@@ -106,8 +79,6 @@ export default function NewProjectPage() {
     } catch (err) {
       setError('An error occurred while creating the project');
       console.error(err);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

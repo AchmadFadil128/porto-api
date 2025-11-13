@@ -13,7 +13,7 @@ export async function GET() {
         slug: projects.slug,
         title: projects.title,
         short_description: projects.short_description,
-        image_base64: projects.image_base64,
+        image_url: projects.image_url,
         description: projects.description,
         live_demo_url: projects.live_demo_url,
         github_repo_url: projects.github_repo_url,
@@ -38,38 +38,28 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const formData = await request.formData();
+    const body = await request.json();
     
-    // Extract text fields from formData
-    const title = formData.get('title') as string;
-    const slug = formData.get('slug') as string;
-    const short_description = formData.get('short_description') as string;
-    const description = formData.get('description') as string | null;
-    const live_demo_url = formData.get('live_demo_url') as string | null;
-    const github_repo_url = formData.get('github_repo_url') as string | null;
-    const screenshots = formData.get('screenshots') ? JSON.parse(formData.get('screenshots') as string) : [];
+    // Extract fields from request body
+    const title = body.title as string;
+    const slug = body.slug as string;
+    const short_description = body.short_description as string;
+    const description = body.description as string | null;
+    const live_demo_url = body.live_demo_url as string | null;
+    const github_repo_url = body.github_repo_url as string | null;
+    const image_url = body.image_url as string;
+    const screenshots = body.screenshots ? (Array.isArray(body.screenshots) ? body.screenshots : []) : [];
 
     // Validate required fields
-    if (!title || !slug || !short_description) {
+    if (!title || !slug || !short_description || !image_url) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Process main image file to Base64
-    const imageFile = formData.get('image') as File | null;
-    let image_base64 = '';
-    
-    if (imageFile) {
-      // Validate file type (only images)
-      if (!imageFile.type.startsWith('image/')) {
-        return NextResponse.json({ error: 'Only image files are allowed for main image' }, { status: 400 });
-      }
-      
-      const buffer = Buffer.from(await imageFile.arrayBuffer());
-      const base64String = buffer.toString('base64');
-      // Add data URL prefix
-      image_base64 = `data:${imageFile.type};base64,${base64String}`;
-    } else {
-      return NextResponse.json({ error: 'Main image is required' }, { status: 400 });
+    // Validate image_url is a valid URL
+    try {
+      new URL(image_url);
+    } catch {
+      return NextResponse.json({ error: 'Invalid image URL' }, { status: 400 });
     }
 
     // Check if slug already exists
@@ -82,14 +72,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Slug already exists' }, { status: 409 });
     }
 
-    // Insert the new project with Base64 image
+    // Insert the new project with image URL
     const [newProject] = await db
       .insert(projects)
       .values({
         title,
         slug,
         short_description,
-        image_base64,
+        image_url,
         description: description || null,
         live_demo_url: live_demo_url || null,
         github_repo_url: github_repo_url || null,

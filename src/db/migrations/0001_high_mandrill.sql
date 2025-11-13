@@ -1,0 +1,1 @@
+ALTER TABLE "projects" RENAME COLUMN "image_base64" TO "image_url";

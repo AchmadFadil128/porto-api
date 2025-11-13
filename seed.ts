@@ -18,26 +18,33 @@ async function seedDatabase() {
     await db.delete(projects);
     
     // Insert sample projects
+    // Note: Using placeholder image URLs. In production, these should be URLs from the image service
     await db.insert(projects).values([
       {
         slug: "personal-portfolio-website",
         title: "Personal Portfolio Website",
         short_description: "This project is a personal portfolio website built with Next.js and Tailwind CSS to showcase my work and skills.",
-        image_base64: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQ1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjM0Q0MjREIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiPlBlcnNvbmFsIFBvcnRmb2xpbwpXZWJzaXRlIFRodHVtYm5haWw8L3RleHQ+PC9zdmc+",
+        image_url: "https://via.placeholder.com/800x450?text=Personal+Portfolio+Website",
         description: "This website was built to showcase my work and skills...",
         live_demo_url: "https://example-portfolio.vercel.app",
         github_repo_url: "https://github.com/user/portfolio-repo",
-        screenshots: ["data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQ1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjNUE1RUE4Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiPlNjcmVlbnNob3QgMSBQb3J0Zm9saW88L3RleHQ+PC9zdmc+", "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQ1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjQzNDNUMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iYmxhY2siIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiPlNjcmVlbnNob3QgMiBQb3J0Zm9saW88L3RleHQ+PC9zdmc+"]
+        screenshots: [
+          "https://via.placeholder.com/800x450?text=Screenshot+1+Portfolio",
+          "https://via.placeholder.com/800x450?text=Screenshot+2+Portfolio"
+        ]
       },
       {
         slug: "to-do-list-app",
         title: "To-Do List Application",
         short_description: "An application for managing daily tasks with a clean and intuitive interface.",
-        image_base64: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQ1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzM2NjMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiPlRvLURvIExpc3QgQXBwIFRodHVtYm5haWw8L3RleHQ+PC9zdmc+",
+        image_url: "https://via.placeholder.com/800x450?text=To-Do+List+App",
         description: "A full-featured to-do list application...",
         live_demo_url: "https://example-todo.vercel.app",
         github_repo_url: "https://github.com/user/todo-repo",
-        screenshots: ["data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQ1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjNkQ2RDY3Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiPlNjcmVlbnNob3QgMSBUT0RPPC90ZXh0Pjwvc3ZnPg==", "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQ1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjOTM3NTQzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiPlNjcmVlbnNob3QgMiBUT0RPPC90ZXh0Pjwvc3ZnPg=="]
+        screenshots: [
+          "https://via.placeholder.com/800x450?text=Screenshot+1+TODO",
+          "https://via.placeholder.com/800x450?text=Screenshot+2+TODO"
+        ]
       }
     ]);
     

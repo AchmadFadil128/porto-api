@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import { uploadImage } from '@/lib/imageService';
 
 interface ScreenshotUploadProps {
   screenshots: string[];
@@ -18,30 +19,12 @@ export default function ScreenshotUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = useCallback(async (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      setError('Only image files are allowed');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
       setUploading(true);
       setError(null);
 
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to upload image');
-      }
-
-      const { imageUrl } = await res.json();
-      onScreenshotsChange([...screenshots, imageUrl]);
+      const uploadedUrl = await uploadImage(file);
+      onScreenshotsChange([...screenshots, uploadedUrl]);
     } catch (err: any) {
       console.error('Upload error:', err);
       setError(err.message || 'Failed to upload image');

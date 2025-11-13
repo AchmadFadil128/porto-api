@@ -18,7 +18,7 @@ export async function GET(
         slug: projects.slug,
         title: projects.title,
         short_description: projects.short_description,
-        image_base64: projects.image_base64,
+        image_url: projects.image_url,
         description: projects.description,
         live_demo_url: projects.live_demo_url,
         github_repo_url: projects.github_repo_url,
@@ -59,16 +59,17 @@ export async function PUT(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    const formData = await request.formData();
+    const body = await request.json();
     
-    // Extract text fields from formData
-    const title = formData.get('title') as string | null;
-    const slugValue = formData.get('slug') as string | null;
-    const short_description = formData.get('short_description') as string | null;
-    const description = formData.get('description') as string | null;
-    const live_demo_url = formData.get('live_demo_url') as string | null;
-    const github_repo_url = formData.get('github_repo_url') as string | null;
-    const screenshots = formData.get('screenshots') ? JSON.parse(formData.get('screenshots') as string) : null;
+    // Extract fields from request body
+    const title = body.title as string | null;
+    const slugValue = body.slug as string | null;
+    const short_description = body.short_description as string | null;
+    const description = body.description as string | null;
+    const live_demo_url = body.live_demo_url as string | null;
+    const github_repo_url = body.github_repo_url as string | null;
+    const image_url = body.image_url as string | null;
+    const screenshots = body.screenshots ? (Array.isArray(body.screenshots) ? body.screenshots : null) : null;
 
     // Check if the new slug already exists (if different from current)
     if (slugValue && slugValue !== slug) {
@@ -82,34 +83,27 @@ export async function PUT(
       }
     }
 
-    // Process main image file to Base64 if provided
-    let image_base64 = existingProject[0].image_base64; // Default to existing value
-    const imageFile = formData.get('image') as File | null;
-    
-    if (imageFile) {
-      // Validate file type (only images)
-      if (!imageFile.type.startsWith('image/')) {
-        return NextResponse.json({ error: 'Only image files are allowed for main image' }, { status: 400 });
+    // Validate image_url if provided
+    if (image_url) {
+      try {
+        new URL(image_url);
+      } catch {
+        return NextResponse.json({ error: 'Invalid image URL' }, { status: 400 });
       }
-      
-      const buffer = Buffer.from(await imageFile.arrayBuffer());
-      const base64String = buffer.toString('base64');
-      // Add data URL prefix
-      image_base64 = `data:${imageFile.type};base64,${base64String}`;
     }
 
     // Update the project
     const [updatedProject] = await db
       .update(projects)
       .set({
-        title: title || existingProject[0].title,
-        slug: slugValue || existingProject[0].slug,
-        short_description: short_description || existingProject[0].short_description,
-        image_base64,
-        description: description !== null ? description : existingProject[0].description,
-        live_demo_url: live_demo_url || existingProject[0].live_demo_url,
-        github_repo_url: github_repo_url || existingProject[0].github_repo_url,
-        screenshots: screenshots !== null ? screenshots : existingProject[0].screenshots,
+        title: title !== null && title !== undefined ? title : existingProject[0].title,
+        slug: slugValue !== null && slugValue !== undefined ? slugValue : existingProject[0].slug,
+        short_description: short_description !== null && short_description !== undefined ? short_description : existingProject[0].short_description,
+        image_url: image_url !== null && image_url !== undefined ? image_url : existingProject[0].image_url,
+        description: description !== null && description !== undefined ? description : existingProject[0].description,
+        live_demo_url: live_demo_url !== null && live_demo_url !== undefined ? live_demo_url : existingProject[0].live_demo_url,
+        github_repo_url: github_repo_url !== null && github_repo_url !== undefined ? github_repo_url : existingProject[0].github_repo_url,
+        screenshots: screenshots !== null && screenshots !== undefined ? screenshots : existingProject[0].screenshots,
       })
       .where(eq(projects.slug, slug))
       .returning();
