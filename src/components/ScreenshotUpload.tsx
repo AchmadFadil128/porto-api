@@ -147,11 +147,6 @@ export default function ScreenshotUpload({
                   src={screenshot} 
                   alt={`Screenshot ${index + 1}`}
                   className="w-full h-24 object-cover rounded-md border"
-                  onError={(e) => {
-                    // Provide fallback if image fails to load
-                    const target = e.target as HTMLImageElement;
-                    target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0yNSA1MEwzNy41IDYyLjVMNzUgMjVMNzUgNzVMMzcuNSA3NUw1MCA4Ny41TDEyLjUgNTBaIiBzdHJva2U9IiM3RjdGN0YiIHN0cm9rZS13aWR0aD0iNSIvPgo8L3N2Zz4K';
-                  }}
                 />
                 <button
                   type="button"

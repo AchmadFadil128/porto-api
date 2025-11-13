@@ -1,8 +1,3 @@
-/**
- * Image Service Client
- * Handles communication with the Golang image service
- */
-
 const IMAGE_SERVICE_URL = process.env.NEXT_PUBLIC_IMAGE_SERVICE_URL || 'http://localhost:8090';
 
 export interface UploadImageResponse {
@@ -18,11 +13,6 @@ export interface ImageServiceError {
   error: string;
 }
 
-/**
- * Upload an image to the image service
- * @param file - The image file to upload
- * @returns The URL of the uploaded image
- */
 export async function uploadImage(file: File): Promise<string> {
   // Validate file type
   if (!file.type.startsWith('image/')) {
